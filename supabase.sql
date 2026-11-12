@@ -33,7 +33,7 @@ insert into public.tournaments (edition,date,platform,players,format,winner,deck
 values
  (1,'2026-10-19','마듀',6,'단판 리그','성훈','아르토메기아',true),
  (2,'2026-10-28','오메가',6,'단판 리그','석진','시간의흑마술사',true),
- (3,'2026-11-02','마듀',6,'단판 리그','연우','빛둠 야미',true),
+ (3,'2026-11-02','마듀',6,'단판 리그','연우','야미',true),
  (4,'2026-11-11','오메가',8,'매치 토너먼트','준민','빛둠 섀도르',true)
 on conflict (edition) where approved do nothing;
 
