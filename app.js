@@ -29,17 +29,17 @@ function render() {
   const q = $('#search').value.trim().toLocaleLowerCase();
   const filtered = records.filter(r => (platform === '전체' || platform === r.platform) && `${r.winner} ${r.deck} ${r.edition}회 ${r.format} ${r.platform} ${r.date}`.toLocaleLowerCase().includes(q));
   $('#record-count').textContent = String(filtered.length).padStart(2,'0');
-  $('#records').innerHTML = filtered.map(r => `<article class="record"><div class="record-head"><span class="edition">TOURNAMENT ${String(r.edition).padStart(2,'0')}</span><time datetime="${r.date}">${dateText(r.date)}</time></div><div class="record-summary">${thumbnailMarkup(r)}<div class="record-info"><h3><span class="winner-label">우승</span>${escapeHtml(r.winner)}</h3><p class="deck">${escapeHtml(r.deck)}</p></div></div><p><span class="badge ${r.platform==='오메가'?'omega':''}">${escapeHtml(r.platform)}</span><span class="badge">${r.players}인 · ${escapeHtml(r.format)}</span></p><div class="record-foot"><span>${hasDeck(r)?'덱리 등록됨':'덱리 미등록'}</span><button data-detail="${r.edition}" aria-label="제 ${r.edition}회 대회 상세 보기">상세 보기 ↗</button></div></article>`).join('') || '<p class="empty">조건에 맞는 기록이 없습니다.</p>';
+  $('#records').innerHTML = filtered.map(r => `<article class="record"><div class="record-head"><span class="edition">TOURNAMENT ${String(r.edition).padStart(2,'0')}</span><time datetime="${r.date}">${dateText(r.date)}</time></div><div class="record-summary">${thumbnailMarkup(r)}<div class="record-info"><h3><span class="winner-label">우승</span>${escapeHtml(r.winner)}</h3><p class="deck">${escapeHtml(r.deck)}</p></div></div><p><span class="badge ${r.platform==='오메가'?'omega':''}">${escapeHtml(r.platform)}</span><span class="badge">${r.players}인 · ${escapeHtml(r.format)}</span></p><div class="record-foot"><span>${hasDeck(r)?'덱리 등록됨':'덱리 미등록'}</span><div class="record-actions"><button data-media="${r.edition}" aria-label="제 ${r.edition}회 썸네일·덱리 등록">썸네일·덱리 등록</button><button data-detail="${r.edition}" aria-label="제 ${r.edition}회 대회 상세 보기">상세 보기 ↗</button></div></div></article>`).join('') || '<p class="empty">조건에 맞는 기록이 없습니다.</p>';
 
 }
 function showDetail(edition) {
   const r = records.find(r=>r.edition===Number(edition));
   if (!r) return;
   const image = safeUrl(r.image), link = safeUrl(r.link);
-  $('#detail-content').innerHTML = `<p class="eyebrow">TOURNAMENT ${String(r.edition).padStart(2,'0')}</p><h2>제 ${r.edition}회 · ${escapeHtml(r.winner)} 우승</h2><p class="detail-meta">${dateText(r.date)} · ${escapeHtml(r.platform)}<br>${r.players}인 · ${escapeHtml(r.format)}</p><div class="detail-deck"><p class="eyebrow">WINNING DECK</p><div class="detail-summary">${thumbnailMarkup(r)}<h3>${escapeHtml(r.deck)}</h3></div>${hasDeck(r)?'':'<p class="muted">아직 덱리가 등록되지 않았습니다.</p>'}${image?`<a href="${escapeHtml(image)}" target="_blank" rel="noopener noreferrer"><img src="${escapeHtml(image)}" alt="${escapeHtml(r.winner)}의 ${escapeHtml(r.deck)} 덱리" loading="lazy" referrerpolicy="no-referrer"></a>`:''}${link?`<p><a href="${escapeHtml(link)}" target="_blank" rel="noopener noreferrer">덱리 / 영상 링크 열기 ↗</a></p>`:''}${r.decklist?`<pre>${escapeHtml(r.decklist)}</pre>`:''}${r.notes?`<h3>대회 메모</h3><pre>${escapeHtml(r.notes)}</pre>`:''}</div>`;
+  $('#detail-content').innerHTML = `<p class="eyebrow">TOURNAMENT ${String(r.edition).padStart(2,'0')}</p><h2>제 ${r.edition}회 · ${escapeHtml(r.winner)} 우승</h2><p class="detail-meta">${dateText(r.date)} · ${escapeHtml(r.platform)}<br>${r.players}인 · ${escapeHtml(r.format)}</p><button class="edit-media" data-media="${r.edition}">썸네일·덱리 등록</button><div class="detail-deck"><p class="eyebrow">WINNING DECK</p><div class="detail-summary">${thumbnailMarkup(r)}<h3>${escapeHtml(r.deck)}</h3></div>${hasDeck(r)?'':'<p class="muted">아직 덱리가 등록되지 않았습니다.</p>'}${image?`<a href="${escapeHtml(image)}" target="_blank" rel="noopener noreferrer"><img src="${escapeHtml(image)}" alt="${escapeHtml(r.winner)}의 ${escapeHtml(r.deck)} 덱리" loading="lazy" referrerpolicy="no-referrer"></a>`:''}${link?`<p><a href="${escapeHtml(link)}" target="_blank" rel="noopener noreferrer">덱리 / 영상 링크 열기 ↗</a></p>`:''}${r.decklist?`<pre>${escapeHtml(r.decklist)}</pre>`:''}${r.notes?`<h3>대회 메모</h3><pre>${escapeHtml(r.notes)}</pre>`:''}</div>`;
   $('#detail').showModal();
 }
-document.addEventListener('click', e => { const b=e.target.closest('[data-detail]');if(b)showDetail(b.dataset.detail); });
+document.addEventListener('click', e => { const b=e.target.closest('[data-detail]');if(b)showDetail(b.dataset.detail);const m=e.target.closest('[data-media]');if(m)openMedia(m.dataset.media); });
 document.querySelectorAll('.close').forEach(b=>b.addEventListener('click',()=>b.closest('dialog').close()));
 document.querySelectorAll('dialog').forEach(d=>d.addEventListener('click',e=>{if(e.target===d){const r=d.getBoundingClientRect();if(e.clientX<r.left||e.clientX>r.right||e.clientY<r.top||e.clientY>r.bottom)d.close();}}));
 document.querySelectorAll('[data-platform]').forEach(b=>b.addEventListener('click',()=>{platform=b.dataset.platform;document.querySelectorAll('[data-platform]').forEach(t=>{t.classList.toggle('active',t===b);t.setAttribute('aria-pressed',String(t===b));});render();}));
@@ -76,6 +76,41 @@ $('#submit-form').addEventListener('submit', async e=>{
   } catch(error) {status.className='error';status.textContent='저장 완료를 확인하지 못했습니다. 입력 내용은 유지했습니다. 연결 상태를 확인하거나 운영자에게 문의해주세요. 중복 제출 전 저장 여부를 확인해주세요.';}
   finally {$('#save-button').disabled=false;}
 });
+function openMedia(edition) {
+  const record=records.find(r=>r.edition===Number(edition));if(!record)return;
+  const form=$('#media-form');
+  form.reset();
+  form.elements.edition.value=record.edition;
+  for(const name of ['thumbnail','image','link','decklist'])form.elements[name].value=record[name]||'';
+  $('#media-record').textContent=`제 ${record.edition}회 · ${record.winner} · ${record.deck}`;
+  $('#media-status').textContent=connected?'':'저장소 연결 전입니다. 연결 완료 후 등록할 수 있습니다.';
+  $('#media-status').className=connected?'':'error';$('#media-save').disabled=!connected;
+  renderMediaPreview();
+  if($('#detail').open)$('#detail').close();
+  $('#media-dialog').showModal();
+}
+function renderMediaPreview(){
+  const preview=$('#media-preview'),value=$('#media-form').elements.thumbnail.value.trim();
+  preview.hidden=!safeUrl(value);preview.innerHTML=preview.hidden?'':thumbnailMarkup({thumbnail:value,deck:'덱 썸네일 미리보기'});
+}
+$('#media-form').elements.thumbnail.addEventListener('input',renderMediaPreview);
+$('#media-form').addEventListener('submit',async e=>{
+  e.preventDefault();if(!connected)return;
+  const form=e.target,status=$('#media-status');
+  const values=Object.fromEntries(new FormData(form));
+  for(const k of Object.keys(values))values[k]=values[k].trim();
+  values.edition=Number(values.edition);
+  if(!records.some(r=>r.edition===values.edition)){status.className='error';status.textContent='대회 기록을 다시 선택해주세요.';return;}
+  if(['thumbnail','image','link'].some(k=>values[k]&&!safeUrl(values[k]))){status.className='error';status.textContent='이미지와 링크에는 HTTPS 주소를 입력해주세요.';return;}
+  const record=records.find(r=>r.edition===values.edition);
+  if(['thumbnail','image','link','decklist'].every(k=>values[k]===(record[k]||''))){status.className='error';status.textContent='변경할 썸네일 또는 덱리 내용을 입력해주세요.';return;}
+  $('#media-save').disabled=true;status.className='';status.textContent='등록 요청을 저장하고 있습니다…';
+  try{
+    await api('tournament_media',{method:'POST',headers:{Prefer:'return=minimal'},body:JSON.stringify(values)});
+    status.className='success';status.textContent='등록 요청이 저장되었습니다. 운영자 승인 후 공개됩니다.';
+    // 성공 후 중복 제출을 막습니다. 창을 닫고 다시 열면 새 요청을 작성할 수 있습니다.
+  }catch(error){status.className='error';status.textContent='저장을 확인하지 못했습니다. 입력 내용은 유지했습니다. 중복 제출 전 운영자에게 저장 여부를 확인해주세요.';$('#media-save').disabled=false;}
+});
 render();
 async function loadRecords() {
   if(!connected){$('#load-status').textContent='기존 대회 4건 · 회원 등록은 데이터베이스 연결 후 사용할 수 있습니다.';return;}
@@ -84,7 +119,14 @@ async function loadRecords() {
     if(!Array.isArray(data))throw new Error('Invalid records');
     // DB의 초기 데이터가 누락되어도 제공받은 기록은 보존합니다. 동일 회차는 DB가 우선합니다.
     records=[...new Map([...window.ARCHIVE_RECORDS,...data].map(r=>[r.edition,r])).values()];
-    $('#load-status').textContent='승인된 최신 기록을 불러왔습니다.';render();
+    try {
+      const media=await api('tournament_media?select=edition,thumbnail,image,link,decklist,created_at&approved=eq.true&order=created_at.asc,id.asc');
+      if(!Array.isArray(media))throw new Error('Invalid media');
+      const latestMedia=new Map(media.map(m=>[m.edition,m]));
+      records=records.map(r=>latestMedia.has(r.edition)?{...r,...latestMedia.get(r.edition)}:r);
+      $('#load-status').textContent='승인된 최신 기록을 불러왔습니다.';
+    } catch(error){$('#load-status').textContent='대회 기록은 불러왔지만 최신 덱리 조회에 실패했습니다. 잠시 후 새로고침해주세요.';}
+    render();
   } catch(error){$('#load-status').textContent='최신 기록을 불러오지 못해 기본 기록 4건을 표시합니다. 잠시 후 새로고침해주세요.';}
 }
 loadRecords();

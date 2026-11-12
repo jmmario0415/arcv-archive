@@ -36,3 +36,28 @@ values
  (3,'2026-11-02','마듀',6,'단판 리그','연우','빛둠 야미',true),
  (4,'2026-11-11','오메가',8,'매치 토너먼트','준민','빛둠 섀도르',true)
 on conflict (edition) where approved do nothing;
+
+
+-- 기존 대회의 썸네일/덱리 등록 요청. 승인된 가장 최근 요청이 표시됩니다.
+create table if not exists public.tournament_media (
+  id uuid primary key default gen_random_uuid(),
+  created_at timestamptz not null default now(),
+  edition integer not null check (edition between 1 and 9999),
+  thumbnail text not null default '' check (char_length(thumbnail) <= 2048 and (thumbnail = '' or thumbnail ~ '^https://')),
+  image text not null default '' check (char_length(image) <= 2048 and (image = '' or image ~ '^https://')),
+  link text not null default '' check (char_length(link) <= 2048 and (link = '' or link ~ '^https://')),
+  decklist text not null default '' check (char_length(decklist) <= 20000),
+  approved boolean not null default false
+);
+alter table public.tournament_media enable row level security;
+revoke all on public.tournament_media from anon, authenticated;
+grant select on public.tournament_media to anon, authenticated;
+grant insert (edition,thumbnail,image,link,decklist) on public.tournament_media to anon, authenticated;
+drop policy if exists "Read approved media" on public.tournament_media;
+create policy "Read approved media" on public.tournament_media for select to anon, authenticated using (approved = true);
+drop policy if exists "Submit pending media" on public.tournament_media;
+create policy "Submit pending media" on public.tournament_media for insert to anon, authenticated
+with check (approved = false and exists (
+  select 1 from public.tournaments t where t.edition = tournament_media.edition and t.approved = true
+));
+create index if not exists tournament_media_lookup on public.tournament_media(edition,created_at) where approved;
