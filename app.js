@@ -19,11 +19,8 @@ document.addEventListener('error', e=>{
     e.target.nextElementSibling.hidden=false;
   }
 },true);
-const thumbnailInput = document.querySelector('[name="thumbnail"]');
-thumbnailInput.addEventListener('input',()=>{
-  const preview=$('#thumbnail-preview'),url=safeUrl(thumbnailInput.value.trim());
-  preview.hidden=!url;preview.innerHTML=url?thumbnailMarkup({thumbnail:url,deck:'덱 썸네일 미리보기'}):'';
-});
+const uploads=window.ArchiveUploads;
+['#submit-form','#media-form'].forEach(id=>uploads.bind($(id)));
 function render() {
   records.sort((a,b) => b.date.localeCompare(a.date) || b.edition-a.edition);
   const q = $('#search').value.trim().toLocaleLowerCase();
@@ -50,6 +47,7 @@ function openSubmit() {
   $('#submit-status').textContent=connected?'':'데이터베이스 연결 전입니다. 입력 화면은 확인할 수 있지만 아직 서버에 저장할 수 없습니다.';
   $('#submit-status').className=connected?'':'error';
   $('#save-button').disabled=!connected;
+  uploads.refresh(f);
   $('#submit-dialog').showModal();
 }
 $('#open-submit').addEventListener('click',openSubmit);
@@ -62,54 +60,53 @@ async function api(path, options={}) {
 }
 $('#submit-form').addEventListener('submit', async e=>{
   e.preventDefault();if(!connected)return;
-  const f=e.target, values=Object.fromEntries(new FormData(f));
+  const f=e.target, values=uploads.values(f);
   for(const k of Object.keys(values))values[k]=values[k].trim();
   values.edition=Number(values.edition);values.players=Number(values.players);
   const status=$('#submit-status');
   if(!values.winner||!values.deck){status.textContent='우승자와 덱 이름을 입력해주세요.';status.className='error';return;}
   if(['thumbnail','image','link'].some(k=>values[k]&&!safeUrl(values[k]))){status.textContent='이미지와 링크에는 https:// 주소를 입력해주세요.';status.className='error';return;}
-  $('#save-button').disabled=true;status.className='';status.textContent='기록을 저장하고 있습니다…';
+  uploads.busy(f,true);status.className='';status.textContent='기록을 저장하고 있습니다…';
   try {
+    await uploads.apply(f,values,status);
+    status.textContent='대회 기록을 저장하고 있습니다…';
     // return=minimal: 제출자는 미승인 데이터의 조회 권한이 없습니다.
     await api('tournaments',{method:'POST',headers:{Prefer:'return=minimal'},body:JSON.stringify(values)});
-    status.className='success';status.textContent='기록이 저장되었습니다. 운영자 승인 후 기록실에 공개됩니다.';f.reset();$('#thumbnail-preview').hidden=true;
-  } catch(error) {status.className='error';status.textContent='저장 완료를 확인하지 못했습니다. 입력 내용은 유지했습니다. 연결 상태를 확인하거나 운영자에게 문의해주세요. 중복 제출 전 저장 여부를 확인해주세요.';}
-  finally {$('#save-button').disabled=false;}
+    records=[...records.filter(r=>r.edition!==values.edition),values];render();status.className='success';status.textContent='기록이 등록되었습니다.';f.reset();uploads.refresh(f);
+  } catch(error) {status.className='error';status.textContent=(error.message||'')+' 저장 완료를 확인하지 못했습니다. 입력 내용은 유지했습니다. 연결 상태를 확인하거나 운영자에게 문의해주세요. 중복 제출 전 저장 여부를 확인해주세요.';}
+  finally {uploads.busy(f,false);}
 });
 function openMedia(edition) {
   const record=records.find(r=>r.edition===Number(edition));if(!record)return;
   const form=$('#media-form');
-  form.reset();
+  uploads.busy(form,false);form.reset();
   form.elements.edition.value=record.edition;
   for(const name of ['thumbnail','image','link','decklist'])form.elements[name].value=record[name]||'';
   $('#media-record').textContent=`제 ${record.edition}회 · ${record.winner} · ${record.deck}`;
   $('#media-status').textContent=connected?'':'저장소 연결 전입니다. 연결 완료 후 등록할 수 있습니다.';
   $('#media-status').className=connected?'':'error';$('#media-save').disabled=!connected;
-  renderMediaPreview();
+  uploads.refresh(form);
   if($('#detail').open)$('#detail').close();
   $('#media-dialog').showModal();
 }
-function renderMediaPreview(){
-  const preview=$('#media-preview'),value=$('#media-form').elements.thumbnail.value.trim();
-  preview.hidden=!safeUrl(value);preview.innerHTML=preview.hidden?'':thumbnailMarkup({thumbnail:value,deck:'덱 썸네일 미리보기'});
-}
-$('#media-form').elements.thumbnail.addEventListener('input',renderMediaPreview);
 $('#media-form').addEventListener('submit',async e=>{
   e.preventDefault();if(!connected)return;
   const form=e.target,status=$('#media-status');
-  const values=Object.fromEntries(new FormData(form));
+  const values=uploads.values(form);
   for(const k of Object.keys(values))values[k]=values[k].trim();
   values.edition=Number(values.edition);
   if(!records.some(r=>r.edition===values.edition)){status.className='error';status.textContent='대회 기록을 다시 선택해주세요.';return;}
   if(['thumbnail','image','link'].some(k=>values[k]&&!safeUrl(values[k]))){status.className='error';status.textContent='이미지와 링크에는 HTTPS 주소를 입력해주세요.';return;}
   const record=records.find(r=>r.edition===values.edition);
-  if(['thumbnail','image','link','decklist'].every(k=>values[k]===(record[k]||''))){status.className='error';status.textContent='변경할 썸네일 또는 덱리 내용을 입력해주세요.';return;}
-  $('#media-save').disabled=true;status.className='';status.textContent='등록 요청을 저장하고 있습니다…';
+  if(!uploads.hasFiles(form)&&['thumbnail','image','link','decklist'].every(k=>values[k]===(record[k]||''))){status.className='error';status.textContent='변경할 썸네일 또는 덱리 내용을 입력해주세요.';return;}
+  uploads.busy(form,true);status.className='';status.textContent='등록 내용을 저장하고 있습니다…';
   try{
+    await uploads.apply(form,values,status);
+    status.textContent='등록 내용을 저장하고 있습니다…';
     await api('tournament_media',{method:'POST',headers:{Prefer:'return=minimal'},body:JSON.stringify(values)});
-    status.className='success';status.textContent='등록 요청이 저장되었습니다. 운영자 승인 후 공개됩니다.';
+    records=records.map(r=>r.edition===values.edition?{...r,...values}:r);render();status.className='success';status.textContent='사진과 덱리가 등록되었습니다.';$('#media-save').disabled=true;
     // 성공 후 중복 제출을 막습니다. 창을 닫고 다시 열면 새 요청을 작성할 수 있습니다.
-  }catch(error){status.className='error';status.textContent='저장을 확인하지 못했습니다. 입력 내용은 유지했습니다. 중복 제출 전 운영자에게 저장 여부를 확인해주세요.';$('#media-save').disabled=false;}
+  }catch(error){status.className='error';status.textContent=(error.message||'')+' 저장을 확인하지 못했습니다. 입력 내용은 유지했습니다. 중복 제출 전 운영자에게 저장 여부를 확인해주세요.';uploads.busy(form,false);}
 });
 render();
 async function loadRecords() {
@@ -124,7 +121,7 @@ async function loadRecords() {
       if(!Array.isArray(media))throw new Error('Invalid media');
       const latestMedia=new Map(media.map(m=>[m.edition,m]));
       records=records.map(r=>latestMedia.has(r.edition)?{...r,...latestMedia.get(r.edition)}:r);
-      $('#load-status').textContent='승인된 최신 기록을 불러왔습니다.';
+      $('#load-status').textContent='최신 기록을 불러왔습니다.';
     } catch(error){$('#load-status').textContent='대회 기록은 불러왔지만 최신 덱리 조회에 실패했습니다. 잠시 후 새로고침해주세요.';}
     render();
   } catch(error){$('#load-status').textContent='최신 기록을 불러오지 못해 기본 기록 4건을 표시합니다. 잠시 후 새로고침해주세요.';}
