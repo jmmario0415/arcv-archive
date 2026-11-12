@@ -8,7 +8,7 @@ function element(id) {
   return elements.get(id);
 }
 const calls=[];
-const context = vm.createContext({window:{ARCHIVE_CONFIG:{supabaseUrl:'https://example.supabase.co',supabaseKey:'sb_publishable_test'}},document:{querySelector:element,querySelectorAll:()=>[],addEventListener(){}},URL,AbortSignal,crypto:require('node:crypto').webcrypto,FormData:class {constructor(form){return Object.entries(form.values);}},fetch:async(url,options)=>{calls.push({url,options});return {ok:true,status:options.method==='POST'?201:200,text:async()=>options.method==='POST'?'':url.includes('/tournaments?')?JSON.stringify(context.window.ARCHIVE_RECORDS.map(r=>({...r,id:'id-'+r.edition,notes:''}))):'[]'};}});
+const context = vm.createContext({window:{ARCHIVE_CONFIG:{supabaseUrl:'https://example.supabase.co',supabaseKey:'sb_publishable_test'}},document:{querySelector:element,querySelectorAll:()=>[],addEventListener(){}},URL,URLSearchParams,location:{search:''},sessionStorage:{getItem(){return null;}},AbortSignal,crypto:require('node:crypto').webcrypto,FormData:class {constructor(form){return Object.entries(form.values);}},fetch:async(url,options)=>{calls.push({url,options});return {ok:true,status:options.method==='POST'?201:200,text:async()=>options.method==='POST'?'':url.includes('/tournaments?')?JSON.stringify(context.window.ARCHIVE_RECORDS.map(r=>({...r,id:'id-'+r.edition,notes:''}))):'[]'};}});
 vm.runInContext(fs.readFileSync(__dirname+'/data.js','utf8'),context);
 vm.runInContext(fs.readFileSync(__dirname+'/uploads.js','utf8'),context);
 vm.runInContext(fs.readFileSync(__dirname+'/app.js','utf8'),context);

@@ -33,7 +33,7 @@ function showDetail(edition) {
   const r = records.find(r=>r.edition===Number(edition));
   if (!r) return;
   const image = safeUrl(r.image), link = safeUrl(r.link);
-  $('#detail-content').innerHTML = `<p class="eyebrow">${r.edition}회</p><h2>제 ${r.edition}회 · ${escapeHtml(r.winner)} 우승</h2><p class="detail-meta">${dateText(r.date)} · ${escapeHtml(r.platform)}<br>${r.players}인 · ${escapeHtml(r.format)}</p><button class="edit-media" data-basic="${r.edition}">기본 정보 수정</button> <button class="edit-media" data-media="${r.edition}">썸네일·덱리 등록</button><div class="detail-deck"><p class="eyebrow">WINNING DECK</p><div class="detail-summary">${thumbnailMarkup(r)}<h3>${escapeHtml(r.deck)}</h3></div>${hasDeck(r)?'':'<p class="muted">아직 덱리가 등록되지 않았습니다.</p>'}${image?`<a href="${escapeHtml(image)}" target="_blank" rel="noopener noreferrer"><img src="${escapeHtml(image)}" alt="${escapeHtml(r.winner)}의 ${escapeHtml(r.deck)} 덱리" loading="lazy" referrerpolicy="no-referrer"></a>`:''}${link?`<p><a href="${escapeHtml(link)}" target="_blank" rel="noopener noreferrer">덱리 / 영상 링크 열기 ↗</a></p>`:''}${r.decklist?`<pre>${escapeHtml(r.decklist)}</pre>`:''}${r.notes?`<h3>대회 메모</h3><pre>${escapeHtml(r.notes)}</pre>`:''}</div>`;
+  $('#detail-content').innerHTML = `<p class="eyebrow">${r.edition}회</p><h2>제 ${r.edition}회 · ${escapeHtml(r.winner)} 우승</h2><p class="detail-meta">${dateText(r.date)} · ${escapeHtml(r.platform)}<br>${r.players}인 · ${escapeHtml(r.format)}</p>${sourceMarkup(r)}<button class="edit-media" data-basic="${r.edition}">기본 정보 수정</button> <button class="edit-media" data-media="${r.edition}">썸네일·덱리 등록</button><div class="detail-deck"><p class="eyebrow">WINNING DECK</p><div class="detail-summary">${thumbnailMarkup(r)}<h3>${escapeHtml(r.deck)}</h3></div>${hasDeck(r)?'':'<p class="muted">아직 덱리가 등록되지 않았습니다.</p>'}${image?`<a href="${escapeHtml(image)}" target="_blank" rel="noopener noreferrer"><img src="${escapeHtml(image)}" alt="${escapeHtml(r.winner)}의 ${escapeHtml(r.deck)} 덱리" loading="lazy" referrerpolicy="no-referrer"></a>`:''}${link?`<p><a href="${escapeHtml(link)}" target="_blank" rel="noopener noreferrer">덱리 / 영상 링크 열기 ↗</a></p>`:''}${r.decklist?`<pre>${escapeHtml(r.decklist)}</pre>`:''}${r.notes?`<h3>대회 메모</h3><pre>${escapeHtml(r.notes)}</pre>`:''}</div>`;
   $('#detail').showModal();
 }
 document.addEventListener('click', e => { const b=e.target.closest('[data-detail]');if(b)showDetail(b.dataset.detail);const m=e.target.closest('[data-media]');if(m)openMedia(m.dataset.media);const basic=e.target.closest('[data-basic]');if(basic)openBasic(basic.dataset.basic); });
@@ -64,6 +64,11 @@ $('#submit-form').addEventListener('submit', async e=>{
   for(const k of Object.keys(values))values[k]=values[k].trim();
   values.edition=Number(values.edition);values.players=Number(values.players);
   const status=$('#submit-status');
+  if(!values.source_id){delete values.source_id;delete values.source_url;delete values.source_snapshot;}
+  else {
+    try {values.source_snapshot=JSON.parse(values.source_snapshot);}catch{status.className='error';status.textContent='대회 정보를 다시 가져와주세요.';return;}
+    if(records.some(r=>r.source_id===values.source_id)){status.className='error';status.textContent='이미 기록실에 등록된 대회입니다.';return;}
+  }
   if(!values.winner||!values.deck){status.textContent='우승자와 덱 이름을 입력해주세요.';status.className='error';return;}
   if(['thumbnail','image','link'].some(k=>values[k]&&!safeUrl(values[k]))){status.textContent='이미지와 링크에는 https:// 주소를 입력해주세요.';status.className='error';return;}
   uploads.busy(f,true);status.className='';status.textContent='기록을 저장하고 있습니다…';
@@ -73,7 +78,7 @@ $('#submit-form').addEventListener('submit', async e=>{
     // return=minimal: 제출자는 미승인 데이터의 조회 권한이 없습니다.
     const inserted=await api('tournaments',{method:'POST',headers:{Prefer:'return=representation'},body:JSON.stringify(values)});
     if(Array.isArray(inserted)&&inserted[0])Object.assign(values,inserted[0]);
-    records=[...records.filter(r=>r.edition!==values.edition),values];render();status.className='success';status.textContent='기록이 등록되었습니다.';f.reset();uploads.refresh(f);
+    records=[...records.filter(r=>r.edition!==values.edition),values];render();status.className='success';status.textContent='기록이 등록되었습니다.';f.reset();uploads.refresh(f);$('#import-info').hidden=true;
   } catch(error) {status.className='error';status.textContent=(error.message||'')+' 저장 완료를 확인하지 못했습니다. 입력 내용은 유지했습니다. 연결 상태를 확인하거나 운영자에게 문의해주세요. 중복 제출 전 저장 여부를 확인해주세요.';}
   finally {uploads.busy(f,false);}
 });
@@ -144,7 +149,7 @@ render();
 async function loadRecords() {
   if(!connected){$('#load-status').textContent='기존 대회 4건 · 회원 등록은 데이터베이스 연결 후 사용할 수 있습니다.';return;}
   try {
-    const data=await api('tournaments?select=id,edition,date,platform,players,format,winner,deck,thumbnail,image,link,decklist,notes&approved=eq.true&order=date.desc');
+    const data=await api('tournaments?select=id,edition,date,platform,players,format,winner,deck,thumbnail,image,link,decklist,notes,source_id,source_url,source_snapshot&approved=eq.true&order=date.desc');
     if(!Array.isArray(data))throw new Error('Invalid records');
     // 연결 성공 시 DB가 기준입니다. 회차 변경 후 옛 기본 기록이 다시 나타나지 않도록 합니다.
     records=data;
@@ -158,4 +163,22 @@ async function loadRecords() {
     render();
   } catch(error){$('#load-status').textContent='최신 기록을 불러오지 못해 기본 기록 4건을 표시합니다. 잠시 후 새로고침해주세요.';}
 }
-loadRecords();
+loadRecords().then(importFromDuel);
+
+function importFromDuel(){
+  const token=new URLSearchParams(location.search).get('duel-import');
+  if(!token||!/^[a-z0-9]+$/.test(token))return;
+  const existing=records.find(r=>r.source_id===token);
+  if(existing){$('#load-status').textContent=`이 대회는 이미 ${existing.edition}회로 등록되어 있습니다.`;showDetail(existing.edition);return;}
+  let data;try{data=JSON.parse(sessionStorage.getItem('arcv:archive:'+token));}catch{return;}
+  if(!data||data.source_id!==token||!Array.isArray(data.source_snapshot?.players))return;
+  const form=$('#submit-form');form.reset();
+  for(const key of ['date','players','winner','platform','format','notes','source_id','source_url'])form.elements[key].value=data[key]??'';
+  form.elements.source_snapshot.value=JSON.stringify(data.source_snapshot);
+  $('#import-info').hidden=false;$('#import-info').textContent='대진표에서 대회 정보를 가져왔습니다. 회차·플랫폼·날짜·방식을 확인하고 사용 덱을 입력한 뒤 저장해주세요.';
+  openSubmit();
+}
+function sourceMarkup(r){
+  const url=safeUrl(r.source_url),rows=r.source_snapshot?.standings;
+  return `${url?`<p><a class="source-link" href="${escapeHtml(url)}">이 대회 대진표 보기 ↗</a></p>`:''}${Array.isArray(rows)&&rows.length<=16?`<details class="source-results"><summary>등록 당시 최종 순위표</summary><table><thead><tr><th>순위</th><th>참가자</th><th>승</th><th>패</th></tr></thead><tbody>${rows.map(row=>`<tr><td>${escapeHtml(row.rank??'-')}</td><td>${escapeHtml(row.name)}</td><td>${escapeHtml(row.w)}</td><td>${escapeHtml(row.l)}</td></tr>`).join('')}</tbody></table></details>`:''}`;
+}
