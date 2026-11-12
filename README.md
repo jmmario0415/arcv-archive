@@ -38,7 +38,7 @@ DB 연결 전에도 기존 4개 기록을 열람할 수 있습니다. 저장 버
 
 GitHub 저장소: https://github.com/jmmario0415/arcv-archive
 
-Supabase는 아직 연결되지 않았습니다. DB 연결 전에는 기존 4개 기록의 열람만 가능하며 회원 제출은 비활성화됩니다.
+Supabase 프로젝트가 연결되어 있습니다. 회원은 신규 대회와 기존 대회의 썸네일·덱리를 제출할 수 있습니다. 제출은 승인 대기로 저장됩니다. 운영자는 Supabase Table Editor에서 approved를 true로 바꿔 공개합니다.
 
 ## 수정
 

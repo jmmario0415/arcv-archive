@@ -1,3 +1,2 @@
-// Supabase 프로젝트의 공개 URL과 publishable key만 입력하세요.
-// service_role / secret key는 절대로 입력하지 마세요.
-window.ARCHIVE_CONFIG = { supabaseUrl: '', supabaseKey: '' };
+// 브라우저 공개용 키입니다. 비밀 키는 사용하지 않습니다.
+window.ARCHIVE_CONFIG = { supabaseUrl: 'https://eekmxyapzvubowhgjzye.supabase.co', supabaseKey: 'sb_publishable_AjiJFSWGz2I2m9zbJ36V6A__kXtqGev' };
