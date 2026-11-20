@@ -198,10 +198,11 @@ tr.r1{background:rgba(255,207,74,.08)}
 @media (prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}}
 /* 統合ナビゲーションのみ追加。既存パネルと操作は維持 */
 .site-nav{max-width:1120px;margin:0 auto;display:flex;align-items:center;gap:8px;padding:16px 0;border-bottom:1px solid #ffffff15;position:relative;z-index:2}.site-nav strong{margin-right:auto;font-family:var(--f-latin);font-size:17px}.site-nav a{color:var(--dim);text-decoration:none;font-size:13px;font-weight:800;padding:9px 16px;border:1px solid var(--line);border-radius:9px}.site-nav a[aria-current]{color:var(--gold);background:#ffcf4a12;border-color:#ac873d}#archive-export{border-color:var(--gold);color:var(--gold)}#archive-export:disabled{opacity:.4;cursor:not-allowed}@media(max-width:480px){.site-nav a{padding:8px 12px}}
+.member-input-photo{width:32px;height:32px;object-fit:cover;border-radius:7px;flex:none}.nm.has-member-photo .dot{display:none}.directory-help{color:var(--dim);font-size:11px;margin:0 0 10px;line-height:1.7}.directory-help a{color:var(--gold)}.member-insert-row{display:flex;gap:8px;margin:12px 0}.member-insert-row input{flex:1;min-width:0}.member-insert-row button{white-space:nowrap;font-size:12px}
 </style>
 </head>
 <body>
-<nav class="site-nav" aria-label="Arc-V 메뉴"><strong>Arc-V</strong><a href="./" aria-current="page">대진표</a><a href="../">기록실</a></nav>
+<nav class="site-nav" aria-label="Arc-V 메뉴"><strong>Arc-V</strong><a href="./" aria-current="page">대진표</a><a href="../">기록실</a><a href="../members.html">멤버</a></nav>
 
 <div class="wrap">
   <header class="hero">
@@ -229,6 +230,8 @@ tr.r1{background:rgba(255,207,74,.08)}
 
 <script src="https://unpkg.com/mqtt@5.10.1/dist/mqtt.min.js"></script>
 <script src="avatars.js"></script>
+<script src="../config.js?v=20261121-members1"></script>
+<script src="../members-store.js?v=20261121-members1"></script>
 <script src="archive-bridge.js?v=20261113-merge1"></script>
 <script>
 const COLORS=["#3b5bdb","#8e44ad","#0ca678","#e8590c","#1c7ed6","#c2255c","#5c940d","#d9480f","#7048e8","#0b7285","#e67700","#a61e4d","#2f9e44","#364fc7","#9c36b5","#c92a2a"];
@@ -357,7 +360,7 @@ function render(){
       ${form.mode==="custom"?customForm():`
       <label class="lbl">인원</label>
       <div class="stepper"><button type="button" id="minus" aria-label="한 명 빼기">−</button><output id="cnt">${form.n}</output><button type="button" id="plus" aria-label="한 명 추가">+</button><span style="color:var(--dim);font-size:13px">2 ~ 16명</span></div>
-      <label class="lbl">참가자 이름</label>
+      <label class="lbl">참가자 이름</label><p class="directory-help">등록 멤버는 이름을 입력하면 자동완성됩니다. <a href="../members.html">멤버 추가 / 사진 관리 ↗</a></p>
       <div class="names">${opts.map((x,i)=>`<div class="nm"><i class="dot" style="background:${COLORS[i]}"></i><input type="text" id="nm${i}" maxlength="12" placeholder="${i+1}번 듀얼리스트" value="${esc(x)}" aria-label="${i+1}번 참가자 이름"></div>`).join("")}</div>
       ${form.mode==="ko"?`<label class="check"><input type="checkbox" id="shuf" ${form.shuffle?"checked":""}> 대진 순서 랜덤으로 섞기</label>`:""}`}
       <button class="go" id="create" ${dbReady&&canWrite?"":"disabled"}>듀얼 개시!</button>
@@ -384,11 +387,12 @@ function render(){
   }
   const sh=$("#shuf");if(sh)sh.onchange=e=>form.shuffle=e.target.checked;
   $("#create").onclick=create;
+  if(window.ArcVDirectory)window.ArcVDirectory.attach(v);
   v.querySelectorAll("[data-open]").forEach(b=>b.onclick=()=>{location.hash="t-"+b.dataset.open});
 }
 
 function customForm(){
-  return`<label class="lbl" for="ctext">대진표 (한 줄 = 한 라운드)</label>
+  return`<div class="member-insert-row"><input type="text" id="member-insert" maxlength="12" placeholder="등록 멤버 검색" aria-label="대진표에 넣을 멤버 이름"><button class="ghost" id="insert-member-name" type="button">이름 넣기</button></div><label class="lbl" for="ctext">대진표 (한 줄 = 한 라운드)</label>
   <textarea id="ctext" placeholder="규현 vs 성훈, 현서 vs 석진, 영진 vs 준민&#10;규현 vs 석진, 성훈 vs 준민, 현서 vs 영진&#10;…">${esc(form.text)}</textarea>
   <div class="row"><button type="button" class="ghost" id="ex">예시 대진 넣기 (6인 리그)</button><button type="button" class="ghost" id="auto">자동 대진 불러와서 고치기</button><button type="button" class="ghost" id="clr">비우기</button></div>
   ${parsedBox()}`;
@@ -661,6 +665,16 @@ function burst(){
 addEventListener("hashchange",route);
 if(window.mqtt)store.connect();else toast("기록 서버 라이브러리를 못 불러왔어요. 새로고침해 주세요");
 route();
+if(window.ArcVDirectory){
+ const applyDirectory=()=>{
+  Object.keys(AVBY).forEach(key=>delete AVBY[key]);
+  window.ArcVDirectory.list().forEach(member=>{if(member.thumbnail)AVBY[norm(member.name)]=member.thumbnail;});
+  Object.keys(avMemo).forEach(key=>delete avMemo[key]);
+  if(curId){if(!document.activeElement?.matches('input,textarea'))render();}
+  else window.ArcVDirectory.attach($("#view"));
+ };
+ applyDirectory();window.ArcVDirectory.load().then(applyDirectory).catch(()=>{});
+}
 </script>
 
 </body>
