@@ -1,6 +1,7 @@
 const fs=require('node:fs'),vm=require('node:vm'),assert=require('node:assert/strict');
 const html=fs.readFileSync(__dirname+'/duel/index.html','utf8');
 const context=vm.createContext({window:{},URL,Date,location:{href:'https://example.com/arcv-archive/duel/#t-test123'},sessionStorage:{setItem(k,v){this.key=k;this.value=v;}}});
+vm.runInContext(fs.readFileSync(__dirname+'/duel/scoring.js','utf8'),context);
 vm.runInContext(html.slice(html.indexOf('function leagueRounds'),html.indexOf('function render()')),context);
 vm.runInContext(html.slice(html.indexOf('function champsOf'),html.indexOf('function syncChamp')),context);
 vm.runInContext(fs.readFileSync(__dirname+'/duel/archive-bridge.js','utf8'),context);

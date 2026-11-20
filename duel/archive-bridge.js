@@ -12,10 +12,10 @@ window.DuelArchiveBridge = {
     return {
       date:day,players:t.players.length,winner:winner.length<=50?winner:'',
       platform:/오메가|omega/i.test(name)?'오메가':/오프라인/i.test(name)?'오프라인':'마듀',
-      format:(/매치/.test(name)?'매치':'단판')+(t.mode==='ko'?' 토너먼트':' 리그'),
+      format:((t.duelFormat==='match'||(!t.duelFormat&&/매치/.test(name)))?'매치':'단판')+(t.mode==='ko'?' 토너먼트':' 리그'),
       notes:`대회명: ${name}${t.mode==='custom'?'\n직접 입력한 대진':''}${winner.length>50?'\n공동 우승: '+winner:''}`.slice(0,2000),
       source_id:t.id,source_url:source.href,
-      source_snapshot:{name,mode:t.mode,createdAt:t.createdAt,players:[...t.players],results:{...(t.results||{})},schedule:t.schedule||[],standings:ranks.map(r=>({name:t.players[r.i],rank:r.rank,w:r.w,l:r.l}))}
+      source_snapshot:{name,mode:t.mode,duelFormat:t.duelFormat||null,createdAt:t.createdAt,players:[...t.players],results:{...(t.results||{})},schedule:t.schedule||[],standings:ranks.map(r=>({name:t.players[r.i],rank:r.rank,w:r.w,l:r.l,gw:r.gw??0,gl:r.gl??0}))}
     };
   },
   open(t, champions, ranks) {

@@ -179,6 +179,10 @@ function importFromDuel(){
   openSubmit();
 }
 function sourceMarkup(r){
-  const url=safeUrl(r.source_url),rows=r.source_snapshot?.standings;
-  return `${url?`<p><a class="source-link" href="${escapeHtml(url)}">이 대회 대진표 보기 ↗</a></p>`:''}${Array.isArray(rows)&&rows.length<=16?`<details class="source-results"><summary>등록 당시 최종 순위표</summary><table><thead><tr><th>순위</th><th>참가자</th><th>승</th><th>패</th></tr></thead><tbody>${rows.map(row=>`<tr><td>${escapeHtml(row.rank??'-')}</td><td>${escapeHtml(row.name)}</td><td>${escapeHtml(row.w)}</td><td>${escapeHtml(row.l)}</td></tr>`).join('')}</tbody></table></details>`:''}`;
+  const url=safeUrl(r.source_url),rows=r.source_snapshot?.standings,players=r.source_snapshot?.players;
+  const results=r.source_snapshot?.results;
+  const games=Array.isArray(players)&&players.length<=16&&results&&typeof results==='object'&&window.DuelScores?
+    Object.values(results).filter(v=>v&&typeof v==='object'&&Number.isInteger(v.a)&&Number.isInteger(v.b)&&v.a>=0&&v.b>=0&&v.a<players.length&&v.b<players.length&&v.a!==v.b&&window.DuelScores.scores(v,v.a,v.b)):[];
+  const hasSets=Array.isArray(rows)&&r.source_snapshot?.duelFormat==='match';
+  return `${url?`<p><a class="source-link" href="${escapeHtml(url)}">이 대회 대진표 보기 ↗</a></p>`:''}${Array.isArray(rows)&&rows.length<=16?`<details class="source-results"><summary>등록 당시 최종 순위표</summary><table><thead><tr><th>순위</th><th>참가자</th><th>승</th><th>패</th>${hasSets?'<th>세트 승</th><th>세트 패</th>':''}</tr></thead><tbody>${rows.map(row=>`<tr><td>${escapeHtml(row.rank??'-')}</td><td>${escapeHtml(row.name)}</td><td>${escapeHtml(row.w)}</td><td>${escapeHtml(row.l)}</td>${hasSets?`<td>${escapeHtml(row.gw??0)}</td><td>${escapeHtml(row.gl??0)}</td>`:''}</tr>`).join('')}</tbody></table></details>`:''}${games.length?`<details class="source-results"><summary>등록 당시 경기 스코어</summary><table><thead><tr><th>참가자</th><th>스코어</th><th>참가자</th><th>결과</th></tr></thead><tbody>${games.map(g=>{const winner=window.DuelScores.winner(g,g.a,g.b);return `<tr><td>${escapeHtml(players[g.a])}</td><td>${g.sa}:${g.sb}</td><td>${escapeHtml(players[g.b])}</td><td>${winner===null?'진행 중':escapeHtml(players[winner])+' 승'}</td></tr>`;}).join('')}</tbody></table></details>`:''}`;
 }

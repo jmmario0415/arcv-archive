@@ -199,10 +199,12 @@ tr.r1{background:rgba(255,207,74,.08)}
 /* 統合ナビゲーションのみ追加。既存パネルと操作は維持 */
 .site-nav{max-width:1120px;margin:0 auto;display:flex;align-items:center;gap:8px;padding:16px 0;border-bottom:1px solid #ffffff15;position:relative;z-index:2}.site-nav strong{margin-right:auto;font-family:var(--f-latin);font-size:17px}.site-nav a{color:var(--dim);text-decoration:none;font-size:13px;font-weight:800;padding:9px 16px;border:1px solid var(--line);border-radius:9px}.site-nav a[aria-current]{color:var(--gold);background:#ffcf4a12;border-color:#ac873d}#archive-export{border-color:var(--gold);color:var(--gold)}#archive-export:disabled{opacity:.4;cursor:not-allowed}@media(max-width:480px){.site-nav a{padding:8px 12px}}
 .member-input-photo{width:32px;height:32px;object-fit:cover;border-radius:7px;flex:none}.nm.has-member-photo .dot{display:none}.directory-help{color:var(--dim);font-size:11px;margin:0 0 10px;line-height:1.7}.directory-help a{color:var(--gold)}.member-insert-row{display:flex;gap:8px;margin:12px 0}.member-insert-row input{flex:1;min-width:0}.member-insert-row button{white-space:nowrap;font-size:12px}
+
+.duel-format,.score-dialog select{font:inherit;background:var(--night);border:1px solid var(--line);border-radius:9px;padding:11px;color:var(--ink);width:100%}.match-wrap{min-width:0}.score-open{display:block;width:100%;font:inherit;font-size:11px;line-height:1.6;padding:8px;border:1px solid var(--line);border-radius:8px;color:var(--gold);background:var(--night);margin-top:6px}.score-open:disabled{opacity:.35;cursor:not-allowed}.score-dialog{position:relative;background:var(--deep);color:var(--ink);border:1px solid var(--line);border-radius:16px;padding:28px;width:min(440px,calc(100vw - 32px))}.score-dialog::backdrop{background:#070516d9;backdrop-filter:blur(4px)}#score-close{position:absolute;right:10px;top:5px;background:none;border:0;color:var(--dim);font-size:28px}.score-inputs{display:grid;grid-template-columns:1fr 20px 1fr;gap:10px;align-items:end;margin:22px 0}.score-inputs label{min-width:0;text-align:center;font-size:13px;font-weight:800}.score-inputs label span{display:block;overflow-wrap:anywhere;min-height:35px}.score-inputs input{width:100%;background:var(--night);border:1px solid var(--line);border-radius:9px;color:var(--ink);font-size:32px;text-align:center;padding:10px}.score-inputs>span{text-align:center;font-size:25px;align-self:center}.score-actions{display:flex;justify-content:space-between;gap:12px;margin-top:20px}#score-save{background:var(--gold);color:var(--night);font-weight:800}#score-status{font-size:12px;color:var(--lose);line-height:1.7}#score-summary{color:var(--gold);font-size:14px;font-weight:800}
 </style>
-</head>
+<link rel="stylesheet" href="../brand.css?v=20261121-score1"></head>
 <body>
-<nav class="site-nav" aria-label="Arc-V 메뉴"><strong>Arc-V</strong><a href="./" aria-current="page">대진표</a><a href="../">기록실</a><a href="../members.html">멤버</a></nav>
+<nav class="site-nav" aria-label="Arc-V 메뉴"><a class="site-logo" href="../">Arc-V</a><a href="./" aria-current="page">대진표</a><a href="../">기록실</a><a href="../members.html">멤버</a></nav>
 
 <div class="wrap">
   <header class="hero">
@@ -217,8 +219,8 @@ tr.r1{background:rgba(255,207,74,.08)}
         <path d="M100 4V196M4 100H196" stroke="#a9a3d6" stroke-width=".25"/>
       </svg>
     </div>
-    <div class="card"><img src="img/mascot.jpg" alt="내전 마스코트 몬스터 일러스트"></div>
-    <div class="eyebrow">PENDULUM DUEL LEAGUE</div>
+    <div class="card"><img id="hero-member-image" alt="멤버 썸네일" hidden></div>
+    <div class="eyebrow">ARC-V DUEL LEAGUE</div>
     <h1 class="title"><span class="arc">Arc-V</span> 유희왕 내전</h1>
     <p class="tag" id="tagline">대진표를 만들고 링크 하나로 다 같이 승패를 기록해요</p>
   </header>
@@ -228,18 +230,19 @@ tr.r1{background:rgba(255,207,74,.08)}
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 <canvas class="burst" id="burst" aria-hidden="true"></canvas>
 
+<dialog id="score-dialog" class="score-dialog"><button id="score-close" type="button" aria-label="스코어 창 닫기">×</button><h2>경기 스코어</h2><label for="score-format">경기 단위</label><select id="score-format"><option value="single">단판 · 1선승</option><option value="match">매치 · 2선승</option></select><div class="score-inputs"><label><span id="score-player-a"></span><input id="score-a" type="number" min="0" max="2" required aria-label="왼쪽 참가자 세트 승수"></label><span>:</span><label><span id="score-player-b"></span><input id="score-b" type="number" min="0" max="2" required aria-label="오른쪽 참가자 세트 승수"></label></div><p id="score-summary" role="status"></p><p class="hint">진행 중 스코어도 저장할 수 있습니다. 매치는 2승을 먼저 기록한 사람이 승리합니다.</p><p id="score-status" role="status"></p><div class="score-actions"><button id="score-clear" class="ghost" type="button">기록 지우기</button><button id="score-save" class="ghost" type="button">스코어 저장</button></div></dialog>
 <script src="https://unpkg.com/mqtt@5.10.1/dist/mqtt.min.js"></script>
 <script src="avatars.js"></script>
-<script src="../config.js?v=20261121-members1"></script>
-<script src="../members-store.js?v=20261121-members1"></script>
-<script src="archive-bridge.js?v=20261113-merge1"></script>
+<script src="../config.js?v=20261121-score1"></script>
+<script src="../members-store.js?v=20261121-score1"></script>
+<script src="archive-bridge.js?v=20261121-score1"></script><script src="scoring.js?v=20261121-score1"></script>
 <script>
 const COLORS=["#3b5bdb","#8e44ad","#0ca678","#e8590c","#1c7ed6","#c2255c","#5c940d","#d9480f","#7048e8","#0b7285","#e67700","#a61e4d","#2f9e44","#364fc7","#9c36b5","#c92a2a"];
 const $=s=>document.querySelector(s);
 const esc=s=>String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 let db=null, dbReady=false, canWrite=true;
 let list=[], cur=null, curId=null, unsubDoc=null, tab="games", confirmDel=false;
-const form={name:"",mode:"league",n:6,names:["","","","","",""],shuffle:true,text:""};
+const form={name:"",mode:"league",duelFormat:"single",n:6,names:["","","","","",""],shuffle:true,text:""};
 
 /* ---------- 직접 입력: 한 줄 = 한 라운드, "A vs B, C vs D" ---------- */
 function parseCustom(text){
@@ -296,7 +299,7 @@ function bracket(n,res){
       if(a===-1&&b===-1){w=-1;auto=true}
       else if(a===-1&&b!=null){w=b;auto=true}
       else if(b===-1&&a!=null){w=a;auto=true}
-      else if(a!=null&&b!=null){const v=res[key];if(v===a||v===b)w=v}
+      else if(a!=null&&b!=null){const v=res[key];w=window.DuelScores.winner(v,a,b)}
       ms.push({a,b,key,w,auto});next.push(w);
     }
     rounds.push(ms);slots=next;
@@ -308,15 +311,15 @@ function roundKo(r,R){const left=R-r;return left===1?"결승":left===2?"준결�
 
 /* ---------- 집계 ---------- */
 function compute(t){
-  const n=t.players.length,res=t.results||{},games=[],st=t.players.map((p,i)=>({i,w:0,l:0}));
+  const n=t.players.length,res=t.results||{},games=[],st=t.players.map((p,i)=>({i,w:0,l:0,gw:0,gl:0}));
   const h2h={};
   let view;
   if(t.mode==="league"){
-    view=leagueRounds(n).map(gs=>gs.map(([a,b])=>{const k=lkey(a,b),v=res[k];return{a,b,key:k,w:(v===a||v===b)?v:null}}));
+    view=leagueRounds(n).map(gs=>gs.map(([a,b])=>{const k=lkey(a,b),v=res[k];return{a,b,key:k,w:window.DuelScores.winner(v,a,b)}}));
     view.forEach(gs=>gs.forEach(g=>games.push(g)));
   }else if(t.mode==="custom"){
     view=[];const cnt={};
-    (t.schedule||[]).forEach(s=>{(view[s.r]||(view[s.r]=[]));const j=cnt[s.r]=(cnt[s.r]||0);cnt[s.r]++;const k="c"+s.r+"-"+j,v=res[k];view[s.r].push({a:s.a,b:s.b,key:k,w:(v===s.a||v===s.b)?v:null})});
+    (t.schedule||[]).forEach(s=>{(view[s.r]||(view[s.r]=[]));const j=cnt[s.r]=(cnt[s.r]||0);cnt[s.r]++;const k="c"+s.r+"-"+j,v=res[k];view[s.r].push({a:s.a,b:s.b,key:k,w:window.DuelScores.winner(v,s.a,s.b)})});
     view=view.filter(Boolean);
     view.forEach(gs=>gs.forEach(g=>games.push(g)));
   }else{
@@ -325,6 +328,11 @@ function compute(t){
   }
   const per=t.players.map(()=>0);games.forEach(g=>{per[g.a]++;per[g.b]++});
   for(const g of games){if(g.w==null)continue;const lo=g.w===g.a?g.b:g.a;st[g.w].w++;st[lo].l++;h2h[g.w+">"+lo]=(h2h[g.w+">"+lo]||0)+1}
+  for(const g of games){
+    const score=window.DuelScores.scores(res[g.key],g.a,g.b);
+    if(score){st[g.a].gw+=score.a;st[g.a].gl+=score.b;st[g.b].gw+=score.b;st[g.b].gl+=score.a;}
+    else if(g.w!=null&&Number.isInteger(res[g.key])){st[g.w].gw++;st[g.w===g.a?g.b:g.a].gl++;}
+  }
   const done=games.filter(g=>g.w!=null).length;
   let ranks;
   if(t.mode!=="ko"){
@@ -354,9 +362,10 @@ function render(){
       <label class="lbl">방식</label>
       <div class="seg" role="group" aria-label="방식">
         <button type="button" id="m-league" aria-pressed="${form.mode==="league"}"><b>리그전</b><span>모두 한 번씩 붙고 승점으로 순위</span></button>
-        <button type="button" id="m-ko" aria-pressed="${form.mode==="ko"}"><b>토너먼트</b><span>단판 승부, 지면 바로 탈락</span></button>
+        <button type="button" id="m-ko" aria-pressed="${form.mode==="ko"}"><b>토너먼트</b><span>지면 바로 탈락</span></button>
         <button type="button" id="m-custom" aria-pressed="${form.mode==="custom"}"><b>대진표 직접 입력</b><span>이미 짜둔 대진 그대로 넣기</span></button>
       </div>
+      <label class="lbl" for="duel-format">경기 단위</label><select class="duel-format" id="duel-format"><option value="single" ${form.duelFormat==='single'?'selected':''}>단판 · 1승</option><option value="match" ${form.duelFormat==='match'?'selected':''}>매치 · 2선승 (최대 3판)</option></select>
       ${form.mode==="custom"?customForm():`
       <label class="lbl">인원</label>
       <div class="stepper"><button type="button" id="minus" aria-label="한 명 빼기">−</button><output id="cnt">${form.n}</output><button type="button" id="plus" aria-label="한 명 추가">+</button><span style="color:var(--dim);font-size:13px">2 ~ 16명</span></div>
@@ -372,6 +381,7 @@ function render(){
     </section>
   </div>`;
   $("#tname").oninput=e=>form.name=e.target.value;
+  $("#duel-format").onchange=e=>form.duelFormat=e.target.value;
   $("#m-league").onclick=()=>{form.mode="league";render()};
   $("#m-ko").onclick=()=>{form.mode="ko";render()};
   $("#m-custom").onclick=()=>{form.mode="custom";render()};
@@ -424,8 +434,8 @@ function renderT(v){
     ${champSet.size&&confirmDel?`<span class="pwrow"><input type="password" id="pw" placeholder="비밀번호" aria-label="삭제 비밀번호"><button class="ghost danger" id="pwok">삭제</button><button class="ghost" id="pwno">취소</button></span>`:`<button class="ghost danger" id="del">${confirmDel?"정말 삭제할까요? 한 번 더 누르면 삭제":champSet.size?"🔒 내전 삭제":"내전 삭제"}</button>`}
   </div>
   <div class="meta">
-    <span>참가 <b>${P.length}명</b></span>
-    <span>${t.mode==="league"?`총 <b>${c.view.length}라운드</b> · 1인당 <b>${P.length-1}경기</b> · 승리 1점`:t.mode==="custom"?`총 <b>${c.view.length}라운드</b> · 직접 입력한 대진 · 승리 1점`:`<b>${c.view.R}라운드</b> 녹아웃 · 단판 승부`}</span>
+    <span>참가 <b>${P.length}명</b></span><span>${t.duelFormat==="match"?"매치 · 2선승":"단판"}</span>
+    <span>${t.mode==="league"?`총 <b>${c.view.length}라운드</b> · 1인당 <b>${P.length-1}경기</b> · 승리 1점`:t.mode==="custom"?`총 <b>${c.view.length}라운드</b> · 직접 입력한 대진 · 승리 1점`:`<b>${c.view.R}라운드</b> 녹아웃`}</span>
     <span>진행 <b>${c.done}/${c.total}</b> 경기</span>
   </div>
   <div class="progress" aria-hidden="true"><i style="width:${pct}%"></i></div>
@@ -446,7 +456,11 @@ function renderT(v){
   if($("#del"))$("#del").onclick=delT;
   if($("#pw")){const go=()=>{if($("#pw").value===String(window.ADMIN_PW||"arcv")){confirmDel=false;doDelete()}else{toast("비밀번호가 틀렸어요");$("#pw").value="";$("#pw").focus()}};
     $("#pwok").onclick=go;$("#pw").onkeydown=e=>{if(e.key==="Enter")go()};$("#pwno").onclick=()=>{confirmDel=false;render()};$("#pw").focus()}
-  v.querySelectorAll("[data-k]").forEach(b=>b.onclick=()=>record(b.dataset.k,+b.dataset.p));
+  v.querySelectorAll("[data-k]").forEach(b=>b.onclick=()=>{
+    const value=cur.results?.[b.dataset.k];
+    if(cur.duelFormat==='match'||value?.format==='match')openScore(b.dataset.k);else record(b.dataset.k,+b.dataset.p);
+  });
+  v.querySelectorAll('[data-score]').forEach(b=>b.onclick=()=>openScore(b.dataset.score));
 }
 /* 사진: avatars.js에 이름이 등록된 사람은 그 사진, 없는 사람은 남는 사진 중 랜덤
    (대회 id로 고정된 랜덤이라 새로고침하거나 다른 사람이 봐도 같은 사진) */
@@ -499,28 +513,30 @@ function pbtn(i,P,g){
   return`<button class="pl ${cls}" style="${cs(i)}" data-k="${g.key}" data-p="${i}" ${canWrite?"":"disabled"} aria-label="${esc(P[i])} 승리로 기록">${champSet.has(i)?CROWN:""}<span class="nm">${esc(P[i])}</span></button>`;
 }
 function gamesLeague(c,P){
-  return`<p class="hint">이긴 사람 이름을 누르면 기록돼요. 같은 이름을 다시 누르면 취소, 상대를 누르면 바뀌어요.</p>
+  return`<p class="hint">${cur.duelFormat==='match'?'스코어를 입력하세요. 2승을 먼저 기록한 사람이 해당 매치의 승자가 됩니다.':'이긴 사람을 누르면 단판 승리가 기록돼요. 스코어 버튼으로 매치 결과도 기록할 수 있어요.'}</p>
   <div class="rounds">${c.view.map((gs,r)=>`<section class="round"><h3>ROUND ${r+1}<small>${gs.filter(g=>g.w!=null).length}/${gs.length} 완료</small></h3>
-  <div class="matches">${gs.map(g=>`<div class="match ${g.w!=null?"done":""}">${pbtn(g.a,P,g)}<span class="vs">VS</span>${pbtn(g.b,P,g)}</div>`).join("")}</div></section>`).join("")}</div>`;
+  <div class="matches">${gs.map(g=>`<div class="match-wrap"><div class="match ${g.w!=null?"done":""}">${pbtn(g.a,P,g)}<span class="vs">VS</span>${pbtn(g.b,P,g)}</div>${scoreButton(g,P)}</div>`).join("")}</div></section>`).join("")}</div>`;
 }
 function gamesKo(c,P){
   const{rounds,R}=c.view;
-  return`<p class="hint">이긴 사람을 누르면 다음 라운드로 올라가요. 앞 경기 결과를 바꾸면 뒤 경기는 다시 기록해야 해요.</p>
-  <div class="bracket">${rounds.map((ms,r)=>`<div class="bcol"><h3>${roundName(r,R)}</h3>${ms.map(m=>`<div class="bmatch">${pbtn(m.a,P,m)}${pbtn(m.b,P,m)}</div>`).join("")}</div>`).join("")}</div>`;
+  return`<p class="hint">매치는 스코어를 입력하고, 단판은 승자를 눌러 기록하세요. 승자가 바뀌면 연결된 다음 라운드 기록은 초기화됩니다.</p>
+  <div class="bracket">${rounds.map((ms,r)=>`<div class="bcol"><h3>${roundName(r,R)}</h3>${ms.map(m=>`<div class="bmatch">${pbtn(m.a,P,m)}${pbtn(m.b,P,m)}${scoreButton(m,P)}</div>`).join("")}</div>`).join("")}</div>`;
 }
 function rankTable(t,c,P){
   const top=c.ranks.filter(r=>r.rank!=null&&r.rank<=3).slice(0,3);
-  const lg=t.mode!=="ko";
+  const lg=t.mode!=="ko",hasSets=t.duelFormat==='match'||Object.values(t.results||{}).some(v=>v?.format==='match');
   const pod=top.length&&c.done?`<div class="podium">${[top[1],top[0],top[2]].map(r=>r?`<div class="pod p${r.rank}"><span class="rank">${r.rank}위</span><b>${esc(P[r.i])}</b><small>${r.w}승 ${r.l}패</small></div>`:`<div></div>`).join("")}</div>`:"";
-  return`${pod}<div class="tblwrap"><table><thead><tr><th>순위</th><th class="name">이름</th><th>경기</th><th>승</th><th>패</th>${lg?"<th>승점</th>":"<th>도달</th>"}</tr></thead><tbody>
-  ${c.ranks.map(r=>`<tr class="${r.rank&&r.rank<=3?"r"+r.rank:""}"><td class="rank">${r.rank??"–"}</td><td class="name"><span class="chip" style="${cs(r.i)}"><i></i>${esc(P[r.i])}</span></td><td>${r.w+r.l}${lg?"/"+c.per[r.i]:""}</td><td class="w">${r.w}</td><td class="l">${r.l}</td><td>${lg?r.pts:koReach(r,c)}</td></tr>`).join("")}
-  </tbody></table></div><p class="hint" style="margin-top:10px">${lg?"승점이 같으면 공동 순위로 표기해요.":"같은 라운드에서 떨어진 사람은 공동 순위예요."}</p>`;
+  return`${pod}<div class="tblwrap"><table><thead><tr><th>순위</th><th class="name">이름</th><th>경기</th><th>승</th><th>패</th>${hasSets?"<th>세트 승</th><th>세트 패</th>":""}${lg?"<th>승점</th>":"<th>도달</th>"}</tr></thead><tbody>
+  ${c.ranks.map(r=>`<tr class="${r.rank&&r.rank<=3?"r"+r.rank:""}"><td class="rank">${r.rank??"–"}</td><td class="name"><span class="chip" style="${cs(r.i)}"><i></i>${esc(P[r.i])}</span></td><td>${r.w+r.l}${lg?"/"+c.per[r.i]:""}</td><td class="w">${r.w}</td><td class="l">${r.l}</td>${hasSets?`<td>${r.gw}</td><td>${r.gl}</td>`:""}<td>${lg?r.pts:koReach(r,c)}</td></tr>`).join("")}
+  </tbody></table></div><p class="hint" style="margin-top:10px">${lg?(hasSets?"매치 승리 1점으로 집계하며, 승점이 같으면 공동 순위로 표기해요.":"승리 1점으로 집계하며, 승점이 같으면 공동 순위로 표기해요."):"같은 라운드에서 떨어진 사람은 공동 순위예요."}</p>`;
 }
 function koReach(r,c){if(r.rank===1)return"우승";if(r.rank==null)return"진행 중";const R=c.view.R;const lostRound=R-1-Math.log2(r.rank-1);return roundKo(lostRound,R)}
 function matrix(c,P){
   const cell=(i,j)=>{if(i===j)return`<td class="self" aria-label="본인"></td>`;const a=c.h2h[i+">"+j]||0,b=c.h2h[j+">"+i]||0;
+    const pair=c.games.filter(g=>(g.a===i&&g.b===j)||(g.a===j&&g.b===i)).map(g=>window.DuelScores.scores(cur.results?.[g.key],i,j)).filter(Boolean);
+    if(pair.length)return `<td>${pair.map(s=>`<span class="${s.a>s.b?'w':s.a<s.b?'l':'n'}">${s.a}:${s.b}${Math.max(s.a,s.b)<(s.format==='match'?2:1)?' · 진행':''}</span>`).join(' / ')}</td>`;
     if(!a&&!b)return`<td class="n">·</td>`;return`<td>${a?`<span class="w">승</span>`:""}${a&&b?" ":""}${b?`<span class="l">패</span>`:""}</td>`};
-  return`<p class="hint">가로줄 사람 기준 결과예요. 예) 첫 줄의 "승"은 그 사람이 세로줄 상대를 이겼다는 뜻.</p>
+  return`<p class="hint">가로줄 사람 기준 승패와 세트 스코어입니다. 매치가 끝나지 않았으면 진행 중 스코어로 표시됩니다.</p>
   <div class="tblwrap"><table class="mx"><thead><tr><th></th>${P.map((p,j)=>`<th><span class="chip" style="${cs(j)}"><i></i>${esc(p)}</span></th>`).join("")}</tr></thead><tbody>
   ${P.map((p,i)=>`<tr><th class="name"><span class="chip" style="${cs(i)}"><i></i>${esc(p)}</span></th>${P.map((_,j)=>cell(i,j)).join("")}</tr>`).join("")}</tbody></table></div>`;
 }
@@ -534,7 +550,7 @@ async function create(){
     if(p.errs.length){toast(p.errs[0]);return}
     const id=Date.now().toString(36)+Math.random().toString(36).slice(2,6);
     $("#create").disabled=true;
-    try{await store.create(id,{name:form.name.trim()||"Arc-V 유희왕 내전",mode:"custom",players:p.players,schedule:p.sched,createdAt:Date.now()});
+    try{await store.create(id,{name:form.name.trim()||"Arc-V 유희왕 내전",mode:"custom",duelFormat:form.duelFormat,players:p.players,schedule:p.sched,createdAt:Date.now()});
       form.name="";location.hash="t-"+id;toast("내전이 열렸어요! 주소를 공유하세요")}
     catch(e){failed(e);$("#create").disabled=false}
     return;
@@ -546,22 +562,63 @@ async function create(){
   const id=Date.now().toString(36)+Math.random().toString(36).slice(2,6);
   const name=form.name.trim()||"Arc-V 유희왕 내전";
   $("#create").disabled=true;
-  try{await store.create(id,{name,mode:form.mode,players,createdAt:Date.now()});
+  try{await store.create(id,{name,mode:form.mode,duelFormat:form.duelFormat,players,createdAt:Date.now()});
     form.name="";location.hash="t-"+id;toast("내전이 열렸어요! 주소를 공유하세요")}
   catch(e){failed(e);$("#create").disabled=false}
 }
 function record(key,p){
   if(!cur||!db)return;
-  const old=(cur.results||{})[key];
-  const val=old===p?null:p;
-  const before=compute(cur);
-  cur={...cur,results:{...(cur.results||{}),[key]:val}};
-  const after=compute(cur);
-  render();
-  if(val!=null)toast(`${cur.players[p]} 승리 기록!`);
-  const champNow=cur.mode==="ko"?after.view.champ!=null&&before.view.champ==null:after.total&&after.done===after.total&&before.done!==before.total;
+  const game=compute(cur).games.find(g=>g.key===key);if(!game)return;
+  const old=window.DuelScores.winner(cur.results?.[key],game.a,game.b);
+  saveResult(key,old===p?null:p).catch(failed);
+}
+async function saveResult(key,value){
+  if(!cur||!db)throw new Error('실시간 저장소에 연결되지 않았습니다.');
+  const before=compute(cur),id=curId;
+  const plan=window.DuelScores.plan(cur,key,value,compute);
+  // A knockout winner change invalidates only the dependent path.
+  await Promise.all(Object.entries(plan.changes).map(([k,v])=>store.setResult(id,k,v)));
+  if(curId!==id)return;
+  cur={...cur,results:{...(cur.results||{}),...plan.changes}};const after=compute(cur);render();
+  const champNow=cur.mode==='ko'?after.view.champ!=null&&before.view.champ==null:after.total&&after.done===after.total&&before.done!==before.total;
   if(champNow)burst();
-  store.setResult(curId,key,val).catch(failed);
+  toast(value===null?'경기 기록을 지웠어요':'경기 결과를 저장했어요');
+}
+function scoreButton(game,players){
+  const enabled=!game.auto&&game.a!=null&&game.b!=null&&game.a>=0&&game.b>=0&&canWrite;
+  const score=window.DuelScores.scores(cur.results?.[game.key],game.a,game.b);
+  const legacy=Number.isInteger(cur.results?.[game.key])&&game.w!=null;
+  const label=score?`${score.format==='match'?'매치':'단판'} ${score.a} : ${score.b}${game.w==null?' · 진행 중':' · '+players[game.w]+' 승'}`:legacy?'단판 결과 · 스코어 수정':'스코어 기록';
+  return `<button class="score-open" data-score="${game.key}" ${enabled?'':'disabled'}>${esc(label)}</button>`;
+}
+let scoreEditing=null;
+function openScore(key){
+  const game=cur&&compute(cur).games.find(g=>g.key===key);if(!game)return;
+  scoreEditing={id:curId,key,a:game.a,b:game.b,expected:JSON.stringify(cur.results?.[key]??null)};
+  const score=window.DuelScores.scores(cur.results?.[key],game.a,game.b);
+  $('#score-player-a').textContent=cur.players[game.a];$('#score-player-b').textContent=cur.players[game.b];
+  $('#score-format').value=score?.format||cur.duelFormat||'single';
+  $('#score-a').value=score?.a??0;$('#score-b').value=score?.b??0;
+  $('#score-status').textContent='';$('#score-save').disabled=false;$('#score-clear').disabled=false;
+  refreshScore();$('#score-dialog').showModal();
+}
+function refreshScore(){
+  if(!scoreEditing)return;
+  const format=$('#score-format').value,a=Number($('#score-a').value),b=Number($('#score-b').value),limit=format==='match'?2:1;
+  $('#score-a').max=limit;$('#score-b').max=limit;
+  const valid=$('#score-a').value!==''&&$('#score-b').value!==''&&window.DuelScores.valid(format,a,b);
+  $('#score-save').disabled=!valid;
+  $('#score-summary').textContent=!valid?'가능한 스코어를 입력해주세요.':a===limit?`${$('#score-player-a').textContent} 승리 (${a}:${b})`:b===limit?`${$('#score-player-b').textContent} 승리 (${b}:${a})`:`진행 중 (${a}:${b}) · ${limit}선승`;
+}
+async function submitScore(clear=false){
+  if(!scoreEditing||!cur||scoreEditing.id!==curId)return;
+  const game=compute(cur).games.find(g=>g.key===scoreEditing.key);
+  if(!game||game.a!==scoreEditing.a||game.b!==scoreEditing.b||JSON.stringify(cur.results?.[game.key]??null)!==scoreEditing.expected){$('#score-status').textContent='다른 곳에서 결과가 변경되었습니다. 창을 닫고 다시 열어주세요.';return;}
+  const format=$('#score-format').value,sa=Number($('#score-a').value),sb=Number($('#score-b').value);
+  if(!clear&&!window.DuelScores.valid(format,sa,sb))return;
+  $('#score-save').disabled=true;$('#score-clear').disabled=true;$('#score-status').textContent='저장 중…';
+  try{await saveResult(game.key,clear?null:{a:game.a,b:game.b,sa,sb,format});$('#score-dialog').close();}
+  catch(error){$('#score-status').textContent='저장 완료를 확인하지 못했습니다. 연결 상태와 최신 결과를 확인해주세요.';refreshScore();$('#score-clear').disabled=false;}
 }
 function failed(){toast("저장에 실패했어요. 인터넷 연결을 확인하고 다시 눌러주세요")}
 async function delT(){
@@ -642,7 +699,7 @@ const store={
   async create(id,meta){
     const e=this.entry(id);e.meta=meta;e.seen=true;e.gone=false;
     await this.pub("t/"+id+"/meta",meta);
-    await this.pub("idx/"+id,{name:meta.name,mode:meta.mode,players:meta.players,createdAt:meta.createdAt});
+    await this.pub("idx/"+id,{name:meta.name,mode:meta.mode,duelFormat:meta.duelFormat||"single",players:meta.players,createdAt:meta.createdAt});
   },
   setResult(id,key,val){const e=this.entry(id);if(val==null)delete e.results[key];else e.results[key]=val;return this.pub("t/"+id+"/r/"+key,val)},
   async remove(id,t){
@@ -662,11 +719,17 @@ function burst(){
   let f=0;(function step(){x.clearRect(0,0,cv.width,cv.height);ps.forEach(p=>{p.x+=p.vx;p.y+=p.vy;p.vy+=.35;p.r+=.2;x.save();x.translate(p.x,p.y);x.rotate(p.r);x.fillStyle=p.c;x.fillRect(-p.s/2,-p.s/2,p.s,p.s*.6);x.restore()});if(++f<120)requestAnimationFrame(step);else x.clearRect(0,0,cv.width,cv.height)})();
 }
 
-addEventListener("hashchange",route);
+$('#score-close').onclick=()=>$('#score-dialog').close();
+$('#score-save').onclick=()=>submitScore(false);$('#score-clear').onclick=()=>submitScore(true);
+['#score-a','#score-b','#score-format'].forEach(id=>$(id).addEventListener('input',refreshScore));
+addEventListener("hashchange",()=>{if($('#score-dialog').open)$('#score-dialog').close();route()});
 if(window.mqtt)store.connect();else toast("기록 서버 라이브러리를 못 불러왔어요. 새로고침해 주세요");
 route();
 if(window.ArcVDirectory){
+ const heroRoll=Math.random();
  const applyDirectory=()=>{
+  const photos=window.ArcVDirectory.list().filter(m=>m.thumbnail);
+  if(photos.length){const member=photos[Math.floor(heroRoll*photos.length)],img=$('#hero-member-image');img.src=member.thumbnail;img.alt=member.name+' 멤버 썸네일';img.hidden=false;}
   Object.keys(AVBY).forEach(key=>delete AVBY[key]);
   window.ArcVDirectory.list().forEach(member=>{if(member.thumbnail)AVBY[norm(member.name)]=member.thumbnail;});
   Object.keys(avMemo).forEach(key=>delete avMemo[key]);
