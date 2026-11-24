@@ -202,7 +202,7 @@ tr.r1{background:rgba(255,207,74,.08)}
 
 .duel-format,.score-dialog select{font:inherit;background:var(--night);border:1px solid var(--line);border-radius:9px;padding:11px;color:var(--ink);width:100%}.match-wrap{min-width:0}.score-open{display:block;width:100%;font:inherit;font-size:11px;line-height:1.6;padding:8px;border:1px solid var(--line);border-radius:8px;color:var(--gold);background:var(--night);margin-top:6px}.score-open:disabled{opacity:.35;cursor:not-allowed}.score-dialog{position:relative;background:var(--deep);color:var(--ink);border:1px solid var(--line);border-radius:16px;padding:28px;width:min(440px,calc(100vw - 32px))}.score-dialog::backdrop{background:#070516d9;backdrop-filter:blur(4px)}#score-close{position:absolute;right:10px;top:5px;background:none;border:0;color:var(--dim);font-size:28px}.score-inputs{display:grid;grid-template-columns:1fr 20px 1fr;gap:10px;align-items:end;margin:22px 0}.score-inputs label{min-width:0;text-align:center;font-size:13px;font-weight:800}.score-inputs label span{display:block;overflow-wrap:anywhere;min-height:35px}.score-inputs input{width:100%;background:var(--night);border:1px solid var(--line);border-radius:9px;color:var(--ink);font-size:32px;text-align:center;padding:10px}.score-inputs>span{text-align:center;font-size:25px;align-self:center}.score-actions{display:flex;justify-content:space-between;gap:12px;margin-top:20px}#score-save{background:var(--gold);color:var(--night);font-weight:800}#score-status{font-size:12px;color:var(--lose);line-height:1.7}#score-summary{color:var(--gold);font-size:14px;font-weight:800}
 </style>
-<link rel="stylesheet" href="../brand.css?v=20261121-score1"></head>
+<link rel="stylesheet" href="../brand.css?v=20261124-persistence1"></head>
 <body>
 <nav class="site-nav" aria-label="Arc-V 메뉴"><a class="site-logo" href="../">Arc-V</a><a href="./" aria-current="page">대진표</a><a href="../">기록실</a><a href="../members.html">멤버</a></nav>
 
@@ -231,11 +231,11 @@ tr.r1{background:rgba(255,207,74,.08)}
 <canvas class="burst" id="burst" aria-hidden="true"></canvas>
 
 <dialog id="score-dialog" class="score-dialog"><button id="score-close" type="button" aria-label="스코어 창 닫기">×</button><h2>경기 스코어</h2><label for="score-format">경기 단위</label><select id="score-format"><option value="single">단판 · 1선승</option><option value="match">매치 · 2선승</option></select><div class="score-inputs"><label><span id="score-player-a"></span><input id="score-a" type="number" min="0" max="2" required aria-label="왼쪽 참가자 세트 승수"></label><span>:</span><label><span id="score-player-b"></span><input id="score-b" type="number" min="0" max="2" required aria-label="오른쪽 참가자 세트 승수"></label></div><p id="score-summary" role="status"></p><p class="hint">진행 중 스코어도 저장할 수 있습니다. 매치는 2승을 먼저 기록한 사람이 승리합니다.</p><p id="score-status" role="status"></p><div class="score-actions"><button id="score-clear" class="ghost" type="button">기록 지우기</button><button id="score-save" class="ghost" type="button">스코어 저장</button></div></dialog>
-<script src="https://unpkg.com/mqtt@5.10.1/dist/mqtt.min.js"></script>
+<script src="live-store.js?v=20261124-persistence1"></script>
 <script src="avatars.js"></script>
-<script src="../config.js?v=20261121-score1"></script>
-<script src="../members-store.js?v=20261121-score1"></script>
-<script src="archive-bridge.js?v=20261121-score1"></script><script src="scoring.js?v=20261121-score1"></script>
+<script src="../config.js?v=20261124-persistence1"></script>
+<script src="../members-store.js?v=20261124-persistence1"></script>
+<script src="archive-bridge.js?v=20261124-persistence1"></script><script src="scoring.js?v=20261124-persistence1"></script>
 <script>
 const COLORS=["#3b5bdb","#8e44ad","#0ca678","#e8590c","#1c7ed6","#c2255c","#5c940d","#d9480f","#7048e8","#0b7285","#e67700","#a61e4d","#2f9e44","#364fc7","#9c36b5","#c92a2a"];
 const $=s=>document.querySelector(s);
@@ -372,8 +372,8 @@ function render(){
       <label class="lbl">참가자 이름</label><p class="directory-help">등록 멤버는 이름을 입력하면 자동완성됩니다. <a href="../members.html">멤버 추가 / 사진 관리 ↗</a></p>
       <div class="names">${opts.map((x,i)=>`<div class="nm"><i class="dot" style="background:${COLORS[i]}"></i><input type="text" id="nm${i}" maxlength="12" placeholder="${i+1}번 듀얼리스트" value="${esc(x)}" aria-label="${i+1}번 참가자 이름"></div>`).join("")}</div>
       ${form.mode==="ko"?`<label class="check"><input type="checkbox" id="shuf" ${form.shuffle?"checked":""}> 대진 순서 랜덤으로 섞기</label>`:""}`}
-      <button class="go" id="create" ${dbReady&&canWrite?"":"disabled"}>듀얼 개시!</button>
-      ${!db?`<p class="notice">기록 서버에 연결하는 중이에요. 계속 안 되면 새로고침해 주세요.</p>`:""}
+      <button class="go" id="create" ${db&&canWrite?"":"disabled"}>듀얼 개시!</button>
+      ${!db?`<p class="notice">서버 연결을 확인하고 있습니다. 연결되면 대회를 생성할 수 있습니다.</p>`:""}
     </section>
     <section class="panel" aria-labelledby="ls">
       <h2 id="ls">내전 목록</h2>
@@ -439,7 +439,7 @@ function renderT(v){
     <span>진행 <b>${c.done}/${c.total}</b> 경기</span>
   </div>
   <div class="progress" aria-hidden="true"><i style="width:${pct}%"></i></div>
-  <div class="share"><span class="live ${db?"on":""}">${db?"실시간 연결됨":"연결 중…"}</span><span>링크만 있으면 누구나 기록할 수 있어요.</span><button class="ghost" id="copy">링크 복사</button><button class="ghost" id="archive-export" ${champSet.size?"":"disabled"} title="우승자 확정 후 기록실에 등록할 수 있습니다">기록실에 등록 ↗</button></div>
+  <div class="share"><span class="live ${db?"on":""}">${db?"서버 연결됨 · 3초마다 동기화":"연결 중…"}</span><span>링크만 있으면 누구나 기록할 수 있어요.</span><button class="ghost" id="copy">링크 복사</button><button class="ghost" id="archive-export" ${champSet.size?"":"disabled"} title="우승자 확정 후 기록실에 등록할 수 있습니다">기록실에 등록 ↗</button></div>
   ${champ!=null&&(Array.isArray(champ)?champ.length:true)?`<div class="champ" style="margin-bottom:16px">${[...champSet].map(i=>`<div class="champ-av" style="${cs(i)}">${CROWN}</div>`).join("")}<div><div class="crown">CHAMPION</div><b>${(Array.isArray(champ)?champ:[champ]).map(i=>esc(P[i])).join(" · ")}</b></div></div>`:""}
   <div class="tabs" role="tablist">
     <button role="tab" id="tab-games" aria-selected="${tab==="games"}">${t.mode==="ko"?"브래킷":"대진표"}</button>
@@ -502,7 +502,7 @@ function syncChamp(t,arr){
   const want=arr.length?arr:null;
   if(JSON.stringify(m.champ||null)===JSON.stringify(want))return;
   const{id,...nm}=m;if(want)nm.champ=want;else delete nm.champ;
-  store.metas[t.id]={id:t.id,...nm};store.pub("idx/"+t.id,nm).catch(()=>{});
+  store.metas[t.id]={id:t.id,...nm};
   list=Object.values(store.metas).sort((a,b)=>b.createdAt-a.createdAt).slice(0,30);if(!curId)schedule();
 }
 const CROWN=`<svg class="crown-ic" viewBox="0 0 64 46" aria-hidden="true"><path d="M5 41 9 13l13 14L32 5l10 22 13-14 4 28Z" fill="#ffcf4a" stroke="#6b3f00" stroke-width="3" stroke-linejoin="round"/><rect x="5" y="37" width="54" height="7" rx="2" fill="#f0a91a" stroke="#6b3f00" stroke-width="3"/><circle cx="32" cy="5" r="4" fill="#ff4f8b" stroke="#6b3f00" stroke-width="2"/><circle cx="9" cy="13" r="3.5" fill="#3fd0ff" stroke="#6b3f00" stroke-width="2"/><circle cx="55" cy="13" r="3.5" fill="#3fd0ff" stroke="#6b3f00" stroke-width="2"/><circle cx="32" cy="29" r="4" fill="#ff4f8b"/></svg>`;
@@ -577,7 +577,8 @@ async function saveResult(key,value){
   const before=compute(cur),id=curId;
   const plan=window.DuelScores.plan(cur,key,value,compute);
   // A knockout winner change invalidates only the dependent path.
-  await Promise.all(Object.entries(plan.changes).map(([k,v])=>store.setResult(id,k,v)));
+  if(store.setResults)await store.setResults(id,plan.changes);
+  else await Promise.all(Object.entries(plan.changes).map(([k,v])=>store.setResult(id,k,v)));
   if(curId!==id)return;
   cur={...cur,results:{...(cur.results||{}),...plan.changes}};const after=compute(cur);render();
   const champNow=cur.mode==='ko'?after.view.champ!=null&&before.view.champ==null:after.total&&after.done===after.total&&before.done!==before.total;
@@ -650,64 +651,13 @@ function watchDoc(){
   unsubDoc=store.watch(id,t=>{if(id!==curId)return;cur=t;render()},()=>{if(id===curId){toast("없거나 삭제된 내전이에요");goHome()}});
 }
 
-/* ---------- 실시간 저장소: 공개 MQTT 브로커의 보관(retained) 메시지 ---------- */
-const BASE="arcv-duel-6f2q9x/v1/";
-const store={
-  c:null,metas:{},cache:{},watchers:{},scanned:{},ct:{},
-  connect(){
-    const c=this.c=mqtt.connect("wss://broker.emqx.io:8084/mqtt",{clientId:"arcv_"+Math.random().toString(36).slice(2,10),reconnectPeriod:2000,connectTimeout:8000,clean:true});
-    c.on("connect",()=>{db=store;dbReady=true;this.scanned={};c.subscribe(BASE+"idx/+",{qos:1});Object.keys(this.watchers).forEach(id=>c.subscribe(BASE+"t/"+id+"/#",{qos:1}));render()});
-    c.on("close",()=>{if(db){db=null;render()}});
-    c.on("message",(topic,buf)=>this.onMsg(topic.slice(BASE.length),buf.toString()));
-  },
-  onMsg(path,s){
-    const p=path.split("/");let v=null;
-    if(s){try{v=JSON.parse(s)}catch(e){return}}
-    if(p[0]==="idx"){if(v&&v.name)this.metas[p[1]]={id:p[1],...v};else delete this.metas[p[1]];
-      list=Object.values(this.metas).sort((a,b)=>b.createdAt-a.createdAt).slice(0,30);if(!curId)schedule();
-      if(v&&v.name&&!this.scanned[p[1]]&&this.c){this.scanned[p[1]]=1;this.c.subscribe(BASE+"t/"+p[1]+"/#",{qos:1})}
-      return}
-    if(p[0]!=="t")return;
-    const id=p[1],e=this.entry(id);
-    if(p[2]==="meta"){if(v&&v.name){e.meta=v;e.seen=true}else{e.meta=null;e.gone=true}}
-    else if(p[2]==="r"){if(v==null)delete e.results[p[3]];else e.results[p[3]]=v}
-    this.emit(id);
-    // 목록용: 결과가 다 모이면 우승자 계산해서 목록에 반영
-    clearTimeout(this.ct[id]);this.ct[id]=setTimeout(()=>{if(e.meta)syncChamp({id,...e.meta,results:e.results},champsOf({id,...e.meta,results:e.results}))},700);
-  },
-  entry(id){return this.cache[id]||(this.cache[id]={meta:null,results:{}})},
-  emit(id){
-    const e=this.cache[id],w=this.watchers[id];if(!w)return;
-    if(e.gone&&!e.meta){w.gone();return}
-    if(!e.meta)return;
-    const t={id,...e.meta,results:{...e.results}};
-    try{localStorage.setItem("arcv:"+id,JSON.stringify(t))}catch(_){}
-    w.next(t);
-  },
-  watch(id,next,gone){
-    this.watchers[id]={next,gone};
-    const e=this.entry(id);
-    // 이 브라우저에 남아있는 사본으로 먼저 보여주기
-    if(!e.meta){try{const l=JSON.parse(localStorage.getItem("arcv:"+id)||"null");if(l){const{results,id:_,...m}=l;e.meta=m;e.results={...results,...e.results};e.local=true}}catch(_){}}
-    if(e.meta)setTimeout(()=>this.emit(id));
-    if(this.c&&this.c.connected)this.c.subscribe(BASE+"t/"+id+"/#",{qos:1});
-    // 서버에 기록이 사라졌으면 내 사본으로 복구
-    const heal=setTimeout(()=>{if(this.watchers[id]&&this.c&&this.c.connected&&!e.seen&&!e.gone&&e.local){this.create(id,e.meta);Object.entries(e.results).forEach(([k,v])=>this.setResult(id,k,v))}},6000);
-    return()=>{clearTimeout(heal);delete this.watchers[id];if(this.c&&!this.scanned[id])this.c.unsubscribe(BASE+"t/"+id+"/#")};
-  },
-  pub(path,val){return new Promise((ok,no)=>{if(!this.c||!this.c.connected)return no(new Error("offline"));this.c.publish(BASE+path,val==null?"":JSON.stringify(val),{qos:1,retain:true},err=>err?no(err):ok())})},
-  async create(id,meta){
-    const e=this.entry(id);e.meta=meta;e.seen=true;e.gone=false;
-    await this.pub("t/"+id+"/meta",meta);
-    await this.pub("idx/"+id,{name:meta.name,mode:meta.mode,duelFormat:meta.duelFormat||"single",players:meta.players,createdAt:meta.createdAt});
-  },
-  setResult(id,key,val){const e=this.entry(id);if(val==null)delete e.results[key];else e.results[key]=val;return this.pub("t/"+id+"/r/"+key,val)},
-  async remove(id,t){
-    for(const k of Object.keys((t&&t.results)||{}))await this.pub("t/"+id+"/r/"+k,null);
-    await this.pub("t/"+id+"/meta",null);await this.pub("idx/"+id,null);
-    try{localStorage.removeItem("arcv:"+id)}catch(_){}
-  }
-};
+/* ---------- 영구 공유 저장소: Supabase HTTPS ---------- */
+const store=window.createDuelStore({
+ onState:ok=>{db=ok?store:null;canWrite=ok;dbReady=true;render()},
+ onList:items=>{list=items;if(!curId)schedule()},
+ onError:error=>{console.warn(error.message)},
+ champions:champsOf
+});
 let rq=0;function schedule(){if(!rq)rq=setTimeout(()=>{rq=0;render()},30)}
 
 /* 우승 축하 효과 */
@@ -723,7 +673,7 @@ $('#score-close').onclick=()=>$('#score-dialog').close();
 $('#score-save').onclick=()=>submitScore(false);$('#score-clear').onclick=()=>submitScore(true);
 ['#score-a','#score-b','#score-format'].forEach(id=>$(id).addEventListener('input',refreshScore));
 addEventListener("hashchange",()=>{if($('#score-dialog').open)$('#score-dialog').close();route()});
-if(window.mqtt)store.connect();else toast("기록 서버 라이브러리를 못 불러왔어요. 새로고침해 주세요");
+store.connect();
 route();
 if(window.ArcVDirectory){
  const heroRoll=Math.random();
